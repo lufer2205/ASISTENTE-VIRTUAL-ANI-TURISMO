@@ -1,0 +1,5 @@
+{
+  "name": "Nocaima Tourism Assistant - ANI",
+  "description": "A friendly AI chatbot named ANI to help tourists explore Nocaima, Cundinamarca. Get information on hotels, restaurants, activities, and more, powered by Gemini.",
+  "requestFramePermissions": []
+}
