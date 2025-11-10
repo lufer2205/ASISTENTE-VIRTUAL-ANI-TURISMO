@@ -1,0 +1,7 @@
+# netlify.toml
+[build]
+  command = "npm run build" # Comando para construir el proyecto Vite
+  publish = "dist"          # Carpeta donde Vite pone los archivos compilados
+  
+[functions]
+  directory = "netlify/functions" # Directorio de nuestras funciones serverless
