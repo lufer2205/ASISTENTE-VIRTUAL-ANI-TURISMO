@@ -3,7 +3,7 @@ import { Message } from '../types';
 import { startChat } from '../services/geminiService';
 // Fix: Aliased the imported 'Chat' type to 'GeminiChat' to avoid conflict with the component name.
 import type { Chat as GeminiChat } from "@google/genai";
-import { ANI_AVATAR_BASE64, EMERGENCY_CONTACTS, USER_AVATAR_URL } from '../constants';
+import { ANI_AVATAR_URL, EMERGENCY_CONTACTS, USER_AVATAR_URL } from '../constants';
 
 interface MessageBubbleProps {
     message: Message;
@@ -58,7 +58,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     return (
         <div className={`flex items-start gap-3 my-4 ${!isModel && 'flex-row-reverse'}`}>
             <img 
-                src={isModel ? ANI_AVATAR_BASE64 : USER_AVATAR_URL} 
+                src={isModel ? ANI_AVATAR_URL : USER_AVATAR_URL} 
                 alt={isModel ? "ANI Avatar" : "User Avatar"}
                 className={`w-10 h-10 rounded-full border-2 ${isModel ? 'border-sky-300' : 'border-yellow-300'}`}
             />
@@ -109,7 +109,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
 const TypingIndicator: React.FC = () => (
     <div className="flex items-start gap-3 my-4">
-        <img src={ANI_AVATAR_BASE64} alt="ANI Avatar" className="w-10 h-10 rounded-full border-2 border-sky-300" />
+        <img src={ANI_AVATAR_URL} alt="ANI Avatar" className="w-10 h-10 rounded-full border-2 border-sky-300" />
         <div className="bg-sky-100 text-sky-900 rounded-2xl rounded-tl-none px-4 py-3 shadow-lg">
             <div className="flex items-center justify-center space-x-1">
                 <div className="w-2 h-2 bg-sky-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
