@@ -1,4 +1,5 @@
 import { GoogleGenAI, Chat } from "@google/genai";
+// La ruta ahora es correcta gracias a la reestructuración y la configuración de Netlify.
 import { SYSTEM_INSTRUCTION } from "../../src/constants";
 
 // This interface must match the one used by the frontend
