@@ -1,24 +1,34 @@
-import { GoogleGenAI, Chat } from "@google/genai";
-import { SYSTEM_INSTRUCTION } from '../constants';
+// src/services/geminiService.ts
+import { Message } from '../types';
 
-let ai: GoogleGenAI | null = null;
+/**
+ * Llama a la función serverless de Netlify para obtener una respuesta de Gemini.
+ * @param currentMessages El historial completo de la conversación actual.
+ * @returns La respuesta de texto del modelo.
+ */
+export const fetchGeminiResponse = async (currentMessages: Message[]): Promise<string> => {
+    try {
+        // La URL apunta a la función que crearemos en el backend de Netlify.
+        const response = await fetch('/.netlify/functions/get-gemini-response', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Enviamos el historial de mensajes para que la función tenga contexto.
+            body: JSON.stringify({ messages: currentMessages }),
+        });
 
-const getGoogleAI = (): GoogleGenAI => {
-    if (!ai) {
-        if (typeof process === 'undefined' || !process.env || !process.env.API_KEY) {
-            throw new Error("API_KEY environment variable not set or accessible");
+        if (!response.ok) {
+            const errorData = await response.json();
+            // Lanza un error que será capturado por el componente del chat.
+            throw new Error(errorData.error || 'La respuesta de la red no fue exitosa.');
         }
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    }
-    return ai;
-};
 
-export const startChat = (): Chat => {
-    const googleAI = getGoogleAI();
-    return googleAI.chats.create({
-        model: 'gemini-2.5-flash',
-        config: {
-            systemInstruction: SYSTEM_INSTRUCTION,
-        },
-    });
+        const data = await response.json();
+        return data.text;
+    } catch (error) {
+        console.error("Error al obtener la respuesta de Gemini:", error);
+        // Propaga un error amigable para el usuario.
+        throw new Error("No se pudo obtener una respuesta. Por favor, inténtalo de nuevo.");
+    }
 };

@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Message } from '../types';
-import { startChat } from '../services/geminiService';
-// Fix: Aliased the imported 'Chat' type to 'GeminiChat' to avoid conflict with the component name.
-import type { Chat as GeminiChat } from "@google/genai";
+import { fetchGeminiResponse } from '../services/geminiService';
 import { ANI_AVATAR_URL, EMERGENCY_CONTACTS, USER_AVATAR_URL } from '../constants';
 
 interface MessageBubbleProps {
@@ -195,49 +193,37 @@ const Chat: React.FC = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showInterestButtons, setShowInterestButtons] = useState(false);
+    const [showInterestButtons, setShowInterestButtons] = useState(true);
     const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
-    const chatSessionRef = useRef<GeminiChat | null>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    const sendMessageToGemini = useCallback(async (messageText: string) => {
-        if (!messageText.trim() || !chatSessionRef.current) return;
-        
+    // La sesión de chat ya no se gestiona en el cliente, por lo que `chatSessionRef` se elimina.
+    
+    // Función para obtener la respuesta del backend
+    const getAndSetResponse = useCallback(async (currentMessages: Message[]) => {
         setIsLoading(true);
         setError(null);
-
         try {
-            const result = await chatSessionRef.current.sendMessage({ message: messageText });
-            const modelMessage: Message = { role: 'model', text: result.text };
+            const responseText = await fetchGeminiResponse(currentMessages);
+            const modelMessage: Message = { role: 'model', text: responseText };
             setMessages((prev) => [...prev, modelMessage]);
-        } catch (err) {
-            console.error('Error sending message:', err);
-            setError('Lo siento, ocurrió un error al procesar tu solicitud. Por favor, intenta de nuevo.');
+        } catch (err: any) {
+            console.error('Error getting response:', err);
+            setError(err.message || 'Lo siento, ocurrió un error al procesar tu solicitud. Por favor, intenta de nuevo.');
         } finally {
             setIsLoading(false);
         }
     }, []);
 
-    const initializeChat = useCallback(() => {
-        try {
-            chatSessionRef.current = startChat();
-            setMessages([
-                {
-                    role: 'model',
-                    text: '¡Hola! 👋 Soy ANI, tu asistente de turismo para Nocaima. Puedo darte una recomendación personalizada o puedes escribirme tu pregunta directamente. ¿Qué te gustaría hacer? 😊',
-                },
-            ]);
-            setShowInterestButtons(true);
-            setError(null);
-        } catch (e: any) {
-            setError('Error al inicializar el chat. Por favor, verifica la configuración de la API Key.');
-            console.error(e);
-        }
-    }, []);
-    
+    // Se establece el mensaje de bienvenida al cargar el componente.
     useEffect(() => {
-        initializeChat();
-    }, [initializeChat]);
+        setMessages([
+            {
+                role: 'model',
+                text: '¡Hola! 👋 Soy ANI, tu asistente de turismo para Nocaima. Puedo darte una recomendación personalizada o puedes escribirme tu pregunta directamente. ¿Qué te gustaría hacer? 😊',
+            },
+        ]);
+    }, []);
 
     useEffect(() => {
         if (chatContainerRef.current) {
@@ -250,21 +236,23 @@ const Chat: React.FC = () => {
         if (!input.trim() || isLoading) return;
 
         const userMessage: Message = { role: 'user', text: input.trim() };
-        setMessages((prev) => [...prev, userMessage]);
+        const newMessages = [...messages, userMessage];
+        setMessages(newMessages);
         setInput('');
         setShowInterestButtons(false);
-        sendMessageToGemini(userMessage.text);
+        await getAndSetResponse(newMessages);
     };
 
-    const handleInterestSelect = (interest: string) => {
+    const handleInterestSelect = async (interest: string) => {
         if (isLoading) return;
         
-        const messageText = `¡Genial! Me interesa la ${interest}.`;
+        const messageText = `Me interesa la ${interest}.`;
         const userMessage: Message = { role: 'user', text: messageText };
 
-        setMessages((prev) => [...prev, userMessage]);
+        const newMessages = [...messages, userMessage];
+        setMessages(newMessages);
         setShowInterestButtons(false);
-        sendMessageToGemini(`Me interesa la ${interest}`);
+        await getAndSetResponse(newMessages);
     };
 
     return (
